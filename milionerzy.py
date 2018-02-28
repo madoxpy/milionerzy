@@ -2,7 +2,7 @@ from pygame import *
 import numpy as np
 from random import *
 from time import sleep
-
+from numpy import ceil,floor
 
 green=(0,255,0)
 greengrass=(1,166,17)
@@ -14,6 +14,7 @@ bloodred=(138,7,7)
 blue=(0,0,255)
 darkblue=(0,0,139)
 orange=(255,102,0)
+yellow=(255,255,0)
 colors = [(0,0,0),(255,0,0),(0,128,255),(255,128,0),(255,0,128),(128,255,0),(128,0,255),(0,255,0),(0,0,255)]
 
 
@@ -26,7 +27,8 @@ Font=font.SysFont("arial",20)
 
 photo = image.load("chairman.png")
 photo=transform.scale(photo,(600,300))
-
+photo2 = image.load("points.png")
+photo2=transform.scale(photo2,(170,270))
 
 class Button(object):
 	def __init__(self,x,y,w,h,text="",ans=""):
@@ -108,7 +110,9 @@ class nButton(Button):
 		self.act=True
 	def event(self,game):
 		if self.click():
-			newgame()
+			return Game()
+		else:
+			return game
 
 class k50Button(Button):	
 	def __init__(self,x,y,w,h,text=""):
@@ -120,8 +124,23 @@ class k50Button(Button):
 		self.Font=font.SysFont("arial",22)
 		self.act=True
 	def event(self,game):
-		if self.click():
-			pass
+		if self.click() and self.act:
+			tab=["A","B","C","D"]
+			l=choice(tab)
+			while l==game.ans:
+				l=choice(tab)
+			p=choice(tab)
+			while p==l or p==game.ans:
+				p=choice(tab)
+			if l=="A" or p=="A":
+				game.b1.text=""
+			if l=="B" or p=="B":
+				game.b2.text=""
+			if l=="C" or p=="C":
+				game.b3.text=""
+			if l=="D" or p=="D":
+				game.b4.text=""
+			self.act=False
 
 class kphoneButton(Button):	
 	def __init__(self,x,y,w,h,text=""):
@@ -133,8 +152,15 @@ class kphoneButton(Button):
 		self.Font=font.SysFont("arial",22)
 		self.act=True
 	def event(self,game):
-		if self.click():
-			pass
+		if self.click() and self.act :
+			c=(95.-game.num*5.)/100.
+			if random()<c:
+				self.text = game.ans
+			else:
+				tab=["A","B","C","D"]
+				l=choice(tab)
+				self.text = l
+			self.act = False
 		
 class kaudienceButton(Button):	
 	def __init__(self,x,y,w,h,text=""):
@@ -146,16 +172,29 @@ class kaudienceButton(Button):
 		self.Font=font.SysFont("arial",22)
 		self.act=True
 	def event(self,game):
-		if self.click():
-			pass
-		
-		
+		if self.click() and self.act:
+			c=(85.-game.num*5.+randint(-5,5))
+			a1 = floor((100-c)/3.+randint(-5,5))
+			a2 = floor((100-c-a1)/2.+randint(-5,5))
+			a3 = 100-c-a1-a2
+			if game.ans=="A" or game.ans=="A":
+				game.hint="A: "+str((c))+"%, "+"B: "+str((a1))+"%, "+"C: "+str((a2))+"%, "+"D: "+str((a3))+"% "
+			if game.ans=="B" or game.ans=="B":
+				game.hint="A: "+str((a1))+"%, "+"B: "+str((c))+"%, "+"C: "+str((a2))+"%, "+"D: "+str((a3))+"% "
+			if game.ans=="C" or game.ans=="C":
+				game.hint="A: "+str((a2))+"%, "+"B: "+str((a1))+"%, "+"C: "+str((c))+"%, "+"D: "+str((a3))+"% "
+			if game.ans=="D" or game.ans=="D":
+				game.hint="A: "+str((a3))+"%, "+"B: "+str((a1))+"%, "+"C: "+str((a2))+"%, "+"D: "+str((c))+"% "
+			self.act = False
+			
 class Game(object):
 	def __init__(self):
 		
 		self.num=1
-		self.file=open("q.dat")
-		
+		filenum = randint(1,12)
+		self.file=open("q"+str(filenum)+".dat")
+
+
 		self.q =str(self.num)+". "+str(self.file.readline()[0:-1])
 
 		self.b1=Button(60,450,300,50,"A. "+str(self.file.readline()[0:-1]),"A")	
@@ -166,11 +205,12 @@ class Game(object):
 		
 		self.giveup=gButton(10,10,100,40,"Rezygnuj")	
 		self.newgame=nButton(120,10,120,40,"Nowa Gra")	
-		self.k50=nButton(450,10,65,40,"50:50")	
-		self.kphone=nButton(530,10,100,40,"Telefon")	
-		self.kaudiance=nButton(645,10,130,40,"Publicznosc")	
+		self.k50=k50Button(450,10,65,40,"50:50")	
+		self.kphone=kphoneButton(530,10,100,40,"Telefon")	
+		self.kaudience=kaudienceButton(645,10,130,40,"Publicznosc")	
 		mixer.music.load('main_theme.mp3')
 		mixer.music.play(0)
+		self.hint = "" 
 
 	def event(self):
 		self.b1.event(self)
@@ -179,12 +219,12 @@ class Game(object):
 		self.b4.event(self)
 		self.k50.event(self)
 		self.kphone.event(self)
-		self.kaudiance.event(self)
+		self.kaudience.event(self)
 		self.giveup.event(self)
-		self.newgame.event(self)
 	
 	def next(self):
-
+		self.hint = "" 
+		self.kphone.text = "Telefon"
 		if self.num!=12:
 			self.num=self.num+1
 			self.q =str(self.num)+". "+str(self.file.readline()[0:-1])
@@ -209,7 +249,7 @@ class Game(object):
 			self.b4.act=False
 			self.k50.act=False
 			self.kphone.act=False
-			self.kaudiance.act=False
+			self.kaudience.act=False
 			
 			self.giveup.act=False
 		
@@ -232,28 +272,31 @@ class Game(object):
 		self.b4.act=False
 		self.k50.act=False
 		self.kphone.act=False
-		self.kaudiance.act=False
+		self.kaudience.act=False
 		self.giveup.act=False
 
 	
 	def draw(self):
 		window.fill(black)
 		window.blit(photo,(0,20))
+		window.blit(photo2,(600,50))
 		self.b1.draw()
 		self.b2.draw()
 		self.b3.draw()
 		self.b4.draw()
 		self.k50.draw()
 		self.kphone.draw()
-		self.kaudiance.draw()
+		self.kaudience.draw()
 		self.giveup.draw()
 		self.newgame.draw()
 		draw.rect(window,darkblue,Rect(50,320,700,100),1)
 		text = Font.render(self.q,True,white)
 		window.blit(text,(100,350))
+		text = Font.render(self.hint,True,white)
+		window.blit(text,(100,370))
+		draw.rect(window,yellow,Rect(600,310-self.num*20,30,20),1)
 
-def newgame():
-	game = Game()		
+
 
 game=Game()
 end=False
@@ -268,6 +311,8 @@ while not end:
 	
 	game.draw()
 	game.event()
-
+	if game.newgame.click():
+		game = Game()
+		sleep(1.5)
 	clock.tick(20)
 	display.flip()
